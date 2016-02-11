@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.1)
+project(flutter)
+find_package(OpenCV REQUIRED)
+include_directories ("${PROJECT_SOURCE_DIR}")
+add_executable(flutter flutter.cpp options.cpp)
+target_link_libraries(flutter ${OpenCV_LIBS})
+#target_compile_features(flutter PRIVATE cxx_return_type_deduction)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
