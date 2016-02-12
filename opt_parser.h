@@ -6,6 +6,7 @@
 #include <memory>
 #include <stdexcept>
 #include <vector>
+#include <type_traits>
 #include <cstring>
 #include <cstdlib>
 
@@ -184,7 +185,7 @@ struct function_traits<R(C::*)(A) const>
     typedef R result_type;
     typedef A arg_type;
     typedef std::function<R(A)> function_type;
-    struct arg_function {};
+    static constexpr bool arg_function = true;
 };
 
 template <typename C, typename R>
@@ -192,7 +193,7 @@ struct function_traits<R(C::*)(void) const>
 {
     typedef R result_type;
     typedef std::function<R()> function_type;
-    struct void_function {};
+    static constexpr bool void_function = true;
 };
 
 template <
@@ -201,8 +202,8 @@ template <
 	typename A = typename T::arg_type,
 	typename P = opt_placeholder_fn<A>
 >
-std::unique_ptr<P>
-get_opt_placeholder_fn_ptr(F f, typename T::arg_function* = nullptr)
+typename std::enable_if<T::arg_function, std::unique_ptr<P>>::type
+get_opt_placeholder_fn_ptr(F f)
 {
 	return std::make_unique<P>(
 		typename T::function_type(std::forward<F>(f)));
@@ -212,8 +213,9 @@ template <
 	typename F,
 	typename T = function_traits<F>
 >
-std::unique_ptr<opt_placeholder_fn_void>
-get_opt_placeholder_fn_ptr(F f, typename T::void_function* = nullptr)
+typename std::enable_if<T::void_function,
+	std::unique_ptr<opt_placeholder_fn_void>>::type
+get_opt_placeholder_fn_ptr(F f)
 {
 	return std::make_unique<opt_placeholder_fn_void>(
 		typename T::function_type(std::forward<F>(f)));
