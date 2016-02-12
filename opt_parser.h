@@ -284,7 +284,7 @@ struct parser {
 	inline void parse(int argc, char const* const* argv)
 	{
 		bool only_pos_args = false;
-		for (int i = 0; i < argc; ++i) {
+		for (int i = 1; i < argc; ++i) {
 			char const* arg = argv[i];
 			if (!arg[0])
 				continue;

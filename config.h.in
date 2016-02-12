@@ -1,0 +1,6 @@
+#ifndef CONFIG_IN
+#define CONFIG_IN
+
+#cmakedefine CAN_REDIRECT_TO_DEV_NULL
+
+#endif // CONFIG_IN

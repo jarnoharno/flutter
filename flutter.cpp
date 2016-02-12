@@ -15,28 +15,7 @@ int main(int argc, char* argv[])
 	case cont:
 		break;
 	}
+	for (const string& arg: opts.
 	cout << "we're ready!" << endl;
 	return EXIT_SUCCESS;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
