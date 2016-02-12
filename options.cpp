@@ -1,43 +1,10 @@
 #include "options.h"
 #include "opt_parser.h"
-#include "config.h"
+#include "suppress.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
 
-#ifdef CAN_REDIRECT_TO_DEV_NULL
-#include <unistd.h>
-#include <fcntl.h>
-#endif
-
 using namespace std;
-
-struct file_to_null
-{
-#ifdef CAN_REDIRECT_TO_DEV_NULL
-	file_to_null(FILE* file):
-		file(file)
-	{
-		fflush(file);
-		old_err = dup(fileno(file));
-		nil_err = open("/dev/null", O_WRONLY);
-		dup2(nil_err, fileno(file));
-		close(nil_err);
-	}
-
-	~file_to_null()
-	{
-		fflush(file);
-		dup2(old_err, fileno(file));
-		close(old_err);
-	}
-
-	FILE* file;
-	int old_err;
-	int nil_err;
-#else
-	file_to_null(FILE*) {}
-#endif
-};
 
 static void print_help()
 {
@@ -59,17 +26,24 @@ static void print_help()
 struct stop_exception {};
 struct fail_exception {};
 
+template <typename T = int>
+static bool get_video_capture(unique_ptr<cv::VideoCapture>& vc, const T& src = 0)
+{
+	std_to_null stn;
+	unique_ptr<cv::VideoCapture> tmp = make_unique<cv::VideoCapture>(src);
+	if (!tmp->isOpened())
+		return false;
+	vc.swap(tmp);
+	return true;
+}
+
 parse_status parse(options& opts, int argc, char* argv[])
 {
 	opt::parser op;
 	op.add('r', "ransac", &opts.ransac);
 	op.add('k', "kalman", &opts.kalman);
 	op.add('d', "device", [&](int device) {
-		{
-			file_to_null ftn(stderr);
-			opts.cap = make_unique<cv::VideoCapture>(device);
-		}
-		if (!opts.cap->isOpened()) {
+		if (!get_video_capture(opts.cap, device)) {
 			cerr << "unable to open device " << device << endl;
 			throw fail_exception();
 		}
@@ -102,14 +76,14 @@ parse_status parse(options& opts, int argc, char* argv[])
 		return fail;
 	} else if (op.pos_args.size() == 1) {
 		const string& file = op.pos_args.front();
-		{
-			file_to_null ftn(stdout);
-			opts.cap = make_unique<cv::VideoCapture>(file);
-		}
-		if (!opts.cap->isOpened()) {
+		if (!get_video_capture(opts.cap, file)) {
 			cerr << "unable to open file " << file << endl;
 			return fail;
 		}
+	}
+	if (!opts.cap && !get_video_capture(opts.cap)) {
+		cerr << "unable to open default device" << endl;
+		return fail;
 	}
 	return cont;
 }
