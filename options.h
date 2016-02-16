@@ -2,21 +2,32 @@
 #define OPTIONS_H
 
 #include <memory>
+#include <string>
 
 namespace cv {
 	class VideoCapture;
+	class VideoWriter;
 }
 
 namespace flutter {
 
 struct options {
-	float ransac = 0.001;
-	float kalman = 0.5;
-	float low_pass = 0.1;
-	float fps = 50.0;
-	int delay = 20;
-	bool quiet = false;
-	std::unique_ptr<cv::VideoCapture> cap;
+	float ransac;
+	float kalman;
+	float low_pass;
+	float fps;
+	int delay;
+	bool quiet;
+	std::string codec;
+	int fourcc;
+	std::string input;
+	std::string output;
+	int out_width;
+	int out_height;
+	std::unique_ptr<cv::VideoCapture> capture;
+	std::unique_ptr<cv::VideoWriter> writer;
+
+	options();
 };
 
 enum parse_status {

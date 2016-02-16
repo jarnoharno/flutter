@@ -23,6 +23,12 @@ inline std::ostream& operator<<(std::ostream& o, options const& opts)
 		"  fps: " << opts.fps << "," << endl <<
 		"  delay: " << opts.delay << "," << endl <<
 		"  quiet: " << bool_string(opts.quiet) << "," << endl <<
+		"  codec: " << opts.codec << "," << endl <<
+		"  fourcc: 0x" << hex << opts.fourcc << dec << "," << endl <<
+		"  input: \"" << opts.input << "\"," << endl <<
+		"  output: \"" << opts.output << "\"," << endl <<
+		"  out_width: " << opts.out_width << "," << endl <<
+		"  out_height: " << opts.out_height << "," << endl <<
 		"}";
 }
 

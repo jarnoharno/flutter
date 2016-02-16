@@ -112,6 +112,12 @@ float parse(char const* arg)
 	return val;
 }
 
+template <>
+std::string parse(char const* arg)
+{
+	return std::string(arg);
+}
+
 struct opt_placeholder {
 	virtual void handle(char const* arg) const = 0;
 	virtual argument_type arg_type() const = 0;
@@ -122,6 +128,10 @@ template <typename T>
 struct opt_placeholder_fn: public opt_placeholder
 {
 	typedef std::function<void(T)> F;
+	typedef typename std::remove_const<
+		typename std::remove_reference<T>::type
+		>::type
+		plain_type;
 	F handler;
 	inline opt_placeholder_fn(F handler):
 		handler(handler)
@@ -129,7 +139,7 @@ struct opt_placeholder_fn: public opt_placeholder
 	}
 	inline void handle(char const* arg) const
 	{
-		handler(parse<T>(arg));
+		handler(parse<plain_type>(arg));
 	}
 	inline argument_type arg_type() const
 	{
@@ -179,7 +189,7 @@ template <>
 struct opt_placeholder_val<bool>: public opt_placeholder
 {
 	bool* value;
-	opt_placeholder_val(bool *value):
+	opt_placeholder_val(bool* value):
 		value(value)
 	{
 	}
@@ -190,6 +200,24 @@ struct opt_placeholder_val<bool>: public opt_placeholder
 	inline argument_type arg_type() const
 	{
 		return no_argument;
+	}
+};
+
+template <>
+struct opt_placeholder_val<std::string>: public opt_placeholder
+{
+	std::string* value;
+	opt_placeholder_val(std::string* value):
+		value(value)
+	{
+	}
+	inline void handle(char const* arg) const
+	{
+		*value = arg;
+	}
+	inline argument_type arg_type() const
+	{
+		return required_argument;
 	}
 };
 
