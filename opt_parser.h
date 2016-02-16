@@ -175,6 +175,24 @@ struct opt_placeholder_val: public opt_placeholder
 	}
 };
 
+template <>
+struct opt_placeholder_val<bool>: public opt_placeholder
+{
+	bool* value;
+	opt_placeholder_val(bool *value):
+		value(value)
+	{
+	}
+	inline void handle(char const* arg) const
+	{
+		*value = true;
+	}
+	inline argument_type arg_type() const
+	{
+		return no_argument;
+	}
+};
+
 template <typename F>
 struct function_traits: public function_traits<decltype(&F::operator())>
 {};

@@ -6,20 +6,25 @@
 
 using namespace std;
 
+static const flutter::options default_opts;
+
 static void print_help()
 {
 	cout <<
 		"flutter - real time video stabilizer\n"
-		"usage: flutter [options] [infile]\n"
+		"usage: flutter [options] [infile [outfile]]\n"
 		"\n"
 		"  -h, --help             Display this help and exit\n"
 		"  -r, --ransac=<float>   Maximum inlier distance relative to image dimensions.\n"
-		"                         The default is 0.001.\n"
+		"                         The default is " << default_opts.ransac <<  ".\n"
 		"  -k, --kalman=<float>   Kalman measurement error relative to image dimensions.\n"
-		"                         The default is 0.5.\n"
-		"  -l, --low-pass=<float> Low pass filter magnitude. The default is 0.1\n"
+		"                         The default is " << default_opts.kalman << ".\n"
+		"  -l, --low-pass=<float> Low pass filter magnitude. The default is " << default_opts.low_pass << ".\n"
 		"  -d, --device=<int>     Input device number. The default is 0.\n"
 		"                         If infile is given, it overrides this setting.\n"
+		"  -f, --fps=<float>      Frames per second. Only relevant when output is shown.\n"
+		"                         The default is " << default_opts.fps << ".\n"
+		"  -q, --quiet            Do not show output.\n"
 		;
 }
 
@@ -37,11 +42,13 @@ static bool get_video_capture(unique_ptr<cv::VideoCapture>& vc, const T& src = 0
 	return true;
 }
 
-parse_status parse(options& opts, int argc, char* argv[])
+flutter::parse_status flutter::parse(options& opts, int argc, char* argv[])
 {
 	opt::parser op;
 	op.add('r', "ransac", &opts.ransac);
 	op.add('k', "kalman", &opts.kalman);
+	op.add('f', "fps", &opts.fps);
+	op.add('q', "quiet", &opts.quiet);
 	op.add('d', "device", [&](int device) {
 		if (!get_video_capture(opts.cap, device)) {
 			cerr << "unable to open device " << device << endl;
@@ -85,6 +92,7 @@ parse_status parse(options& opts, int argc, char* argv[])
 		cerr << "unable to open default device" << endl;
 		return fail;
 	}
+	opts.delay = 1000/opts.fps;
 	return cont;
 }
 

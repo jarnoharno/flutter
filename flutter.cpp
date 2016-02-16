@@ -1,8 +1,10 @@
 #include "options.h"
+#include "options_io.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
 
 using namespace std;
+using namespace flutter;
 
 int main(int argc, char* argv[])
 {
@@ -16,5 +18,6 @@ int main(int argc, char* argv[])
 		break;
 	}
 	cout << "we're ready!" << endl;
+	cout << opts << endl;
 	return EXIT_SUCCESS;
 }

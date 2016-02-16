@@ -7,10 +7,15 @@ namespace cv {
 	class VideoCapture;
 }
 
+namespace flutter {
+
 struct options {
 	float ransac = 0.001;
 	float kalman = 0.5;
 	float low_pass = 0.1;
+	float fps = 50.0;
+	int delay = 20;
+	bool quiet = false;
 	std::unique_ptr<cv::VideoCapture> cap;
 };
 
@@ -21,5 +26,7 @@ enum parse_status {
 };
 
 parse_status parse(options& opts, int argc, char* argv[]);
+
+}
 
 #endif // OPTIONS_H
