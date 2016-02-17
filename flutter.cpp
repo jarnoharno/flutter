@@ -11,40 +11,47 @@ namespace flutter {
 
 static char const* const program_name = "flutter";
 
+struct frame {
+	Mat image;
+	Transform<double> raw_transform;
+	Transform<double> camera_transform;
+	Transform<double> apparent_transform;
+};
+
 struct state {
 	options opts;
 
-	Mat prev_frame;
-	Mat next_frame;
+	frame prev_frame;
+	frame next_frame;
 
 	void init();
 	void run();
 	bool display();
 };
 
-void state::init()
-{
-	*opts.capture >> next_frame;
-	next_frame.copyTo(prev_frame);
-}
-
 void state::run()
 {
 	namedWindow(program_name, CV_WINDOW_NORMAL);
+	if (!opts.capture->read(next_frame.image))
+		return;
 	bool running = display();
 	while (running) {
-		next_frame.copyTo(prev_frame);
-		*opts.capture >> next_frame;
+		next_frame.image.copyTo(prev_frame.image);
+		if (!opts.capture->read(next_frame.image))
+			return;
 		running = display();
 	}
 }
 
 bool state::display()
 {
+	Size size(opts.out_width, opts.out_height);
+	Mat display;
+	resize(next_frame.image, display, size);
+	if (opts.writer) {
+		opts.writer->write(display);
+	}
 	if (!opts.quiet) {
-		Size size(opts.out_width, opts.out_height);
-		Mat display;
-		resize(next_frame, display, size);
 		imshow(program_name, display);
 		waitKey(opts.delay);
 	}
@@ -79,7 +86,6 @@ int main(int argc, char* argv[])
 	}
 	cout << "we're ready!" << endl;
 	cout << st.opts << endl;
-	st.init();
 	st.run();
 	return EXIT_SUCCESS;
 }

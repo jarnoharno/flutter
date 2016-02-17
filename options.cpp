@@ -30,6 +30,18 @@ static std::string to_upper(std::string const& str)
 	return up;
 }
 
+static std::string get_codec(int fourcc)
+{
+	using namespace std;
+	const locale& loc = locale::classic();
+	string codec(4, ' ');
+	codec[0] = toupper<char>(fourcc & 255, loc);
+	codec[1] = toupper<char>((fourcc >> 8) & 255, loc);
+	codec[2] = toupper<char>((fourcc >> 16) & 255, loc);
+	codec[3] = toupper<char>((fourcc >> 24) & 255, loc);
+	return codec;
+}
+
 flutter::options::options():
 	ransac(0.001),
 	kalman(0.5),
@@ -207,8 +219,10 @@ flutter::parse_status flutter::parse(options& opts, int argc, char* argv[])
 	}
 	if (!opts.input_file.empty()) {
 		opts.fps = opts.capture->get(CV_CAP_PROP_FPS);
-		if (!fourcc_set)
+		if (!fourcc_set) {
 			opts.fourcc = opts.capture->get(CV_CAP_PROP_FOURCC);
+			opts.codec = get_codec(opts.fourcc);
+		}
 	}
 	if (!opts.output_file.empty()) {
 		cv::Size size(opts.out_width, opts.out_height);
