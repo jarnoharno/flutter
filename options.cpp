@@ -37,7 +37,8 @@ flutter::options::options():
 	fps(50.0),
 	quiet(false),
 	codec("MJPG"),
-	fourcc(get_fourcc(codec))
+	fourcc(get_fourcc(codec)),
+	input_src(device_input)
 {
 }
 
@@ -114,8 +115,9 @@ flutter::parse_status flutter::parse(options& opts, int argc, char* argv[])
 			cerr << "unable to open device " << device << endl;
 			throw fail_exception();
 		}
+		opts.input_src = device_input;
 	});
-	op.add('o', "output", &opts.output);
+	op.add('o', "output", &opts.output_file);
 	op.add('s', "size", [&](const std::string& size) {
 		scale = 0.0;
 		out_width = 0;
@@ -174,11 +176,12 @@ flutter::parse_status flutter::parse(options& opts, int argc, char* argv[])
 		cerr << "at most one infile expected" << endl;
 		return fail;
 	} else if (op.pos_args.size() == 1) {
-		opts.input = op.pos_args.front();
-		if (!get_video_capture(opts.capture, opts.input)) {
-			cerr << "unable to open file " << opts.input << endl;
+		opts.input_file = op.pos_args.front();
+		if (!get_video_capture(opts.capture, opts.input_file)) {
+			cerr << "unable to open file " << opts.input_file << endl;
 			return fail;
 		}
+		opts.input_src = file_input;
 	}
 	if (!opts.capture && !get_video_capture(opts.capture)) {
 		cerr << "unable to open default device" << endl;
@@ -202,17 +205,17 @@ flutter::parse_status flutter::parse(options& opts, int argc, char* argv[])
 		opts.out_width = in_width;
 		opts.out_height = in_height;
 	}
-	if (!opts.input.empty()) {
+	if (!opts.input_file.empty()) {
 		opts.fps = opts.capture->get(CV_CAP_PROP_FPS);
 		if (!fourcc_set)
 			opts.fourcc = opts.capture->get(CV_CAP_PROP_FOURCC);
 	}
-	if (!opts.output.empty()) {
+	if (!opts.output_file.empty()) {
 		cv::Size size(opts.out_width, opts.out_height);
-		opts.writer = make_unique<cv::VideoWriter>(opts.output,
+		opts.writer = make_unique<cv::VideoWriter>(opts.output_file,
 			opts.fourcc, opts.fps, size);
 		if (!opts.writer->isOpened()) {
-			cerr << "unable to open file " << opts.output << endl;
+			cerr << "unable to open file " << opts.output_file << endl;
 			return fail;
 		}
 	}

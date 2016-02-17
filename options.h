@@ -4,12 +4,19 @@
 #include <memory>
 #include <string>
 
-namespace cv {
-	class VideoCapture;
-	class VideoWriter;
+namespace cv
+{
+class VideoCapture;
+class VideoWriter;
 }
 
-namespace flutter {
+namespace flutter
+{
+
+enum input_source {
+        device_input,
+        file_input
+};
 
 struct options {
 	float ransac;
@@ -20,8 +27,9 @@ struct options {
 	bool quiet;
 	std::string codec;
 	int fourcc;
-	std::string input;
-	std::string output;
+	input_source input_src;
+	std::string input_file;
+	std::string output_file;
 	int out_width;
 	int out_height;
 	std::unique_ptr<cv::VideoCapture> capture;
@@ -31,9 +39,9 @@ struct options {
 };
 
 enum parse_status {
-	fail,
-	stop,
-	cont
+        fail,
+        stop,
+        cont
 };
 
 parse_status parse(options& opts, int argc, char* argv[]);
