@@ -1,0 +1,77 @@
+#!/bin/bash
+
+width=320
+height=240
+connect=adb
+
+function show_help {
+    echo 'droidcam-show [option] [adb|<address>]'
+    echo 'Options:'
+    echo '  -h|--help              Show help and exit.'
+    echo '  -r                     Reinsert kernel module.'
+    echo '  -rs <width> <height>   Reinitialize kernel module with the given size.'
+    echo '  -q                     Do not open video player.'
+}
+
+while [ $# -gt 0 ]
+do
+key="$1"
+case $key in
+-h|--help)
+    show_help
+    exit 0
+    ;;
+-rs)
+    reinsert=true
+    width="$2"
+    height="$3"
+    shift 2
+    ;;
+-r)
+    reinsert=true
+    ;;
+-q)
+    quiet=true
+    ;;
+*)
+    connect="$1"
+    ;;
+esac
+shift
+done
+
+module=v4l2loopback_dc
+port=4747
+device=/dev/video1
+
+if [ -n "$reinsert" ]; then
+    sudo modprobe -r $module
+    sudo modprobe $module width=$width height=$height
+    sleep 1
+fi
+
+echo "Connecting to $connect..."
+
+if [ "$connect" == adb ]; then
+    adb forward --remove-all
+    adb forward tcp:$port tcp:$port
+    if [ -z "$quiet" ]; then
+        droidcam-cli 127.0.0.1 $port > /dev/null &
+    else
+        droidcam-cli 127.0.0.1 $port
+    fi
+else
+    if [ -z "$quiet" ]; then
+        droidcam-cli "$connect" $port > /dev/null &
+    else
+        droidcam-cli "$connect" $port
+    fi
+fi
+
+if [ -z "$quiet" ]; then
+    droidcam_pid=$!
+    echo droidcam_pid=$droidcam_pid
+    #mplayer tv:// -tv driver=v4l2:device=$device
+    cvlc v4l2://$device
+    kill $droidcam_pid
+fi
