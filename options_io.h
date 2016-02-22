@@ -29,7 +29,8 @@ inline std::ostream& operator<<(std::ostream& o, options const& opts)
 	return o <<
 		"{" << endl <<
 		"  ransac: " << opts.ransac << "," << endl <<
-		"  kalman: " << opts.kalman << "," << endl <<
+		"  process_error: " << opts.process_error << "," << endl <<
+		"  measurement_error: " << opts.measurement_error << "," << endl <<
 		"  low_pass: " << opts.low_pass << "," << endl <<
 		"  fps: " << opts.fps << "," << endl <<
 		"  delay: " << opts.delay << "," << endl <<
@@ -39,6 +40,7 @@ inline std::ostream& operator<<(std::ostream& o, options const& opts)
 		"  input_src: " << input_str(opts.input_src) << "," << endl <<
 		"  input_file: \"" << opts.input_file << "\"," << endl <<
 		"  output_file: \"" << opts.output_file << "\"," << endl <<
+		"  trajectory_file: \"" << opts.trajectory_file << "\"," << endl <<
 		"  out_width: " << opts.out_width << "," << endl <<
 		"  out_height: " << opts.out_height << "," << endl <<
 		"}";

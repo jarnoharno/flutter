@@ -74,4 +74,27 @@ std::ostream& operator<<(std::ostream& o, const Transform<T>& t)
 	return o << "{ x: " << t.x << ", y: " << t.y << ", a: " << t.a << " }";
 }
 
+template <char C, typename T>
+struct with_delim_t
+{
+	static constexpr char delim = C;
+	const Transform<T>& t;
+	with_delim_t(const Transform<T>& t):
+		t(t)
+	{
+	}
+};
+
+template <char C, typename T>
+with_delim_t<C, T> with_delim(const Transform<T>& t)
+{
+	return with_delim_t<C,T>(t);
+}
+
+template <char delim, typename T>
+std::ostream& operator<<(std::ostream& o, const with_delim_t<delim, T>& w)
+{
+	return o << w.t.x << w.delim << w.t.y << w.delim << w.t.a;
+}
+
 #endif // TRANSFORM_H

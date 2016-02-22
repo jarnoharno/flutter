@@ -113,6 +113,18 @@ float parse(char const* arg)
 }
 
 template <>
+double parse(char const* arg)
+{
+	if (!*arg)
+		throw parse_error();
+	char *end;
+	double val = std::strtod(arg, &end);
+	if (*end)
+		throw parse_error();
+	return val;
+}
+
+template <>
 std::string parse(char const* arg)
 {
 	return std::string(arg);
@@ -349,6 +361,7 @@ struct parser {
 	}
 	inline int parse_short_opt(char const* opt, char const* next)
 	{
+		int skip = 1;
 		if (!*opt)
 			return 0;
 		for (const opt_entry& e: opts) {
@@ -361,15 +374,17 @@ struct parser {
 			}
 			if (opt[1] == '\0' && !next)
 				throw required_argument_error(std::string("-") + *opt);
-			if (opt[1] != '\0')
+			if (opt[1] != '\0') {
 				next = opt+1;
+				skip = 0;
+			}
 			try {
 				e.handler->handle(next);
 			} catch (opt_error& err) {
 				err.opt = std::string("-") + *opt;
 				throw;
 			}
-			return 1;
+			return skip;
 		}
 		throw unknown_option_error(std::string("-") + *opt);
 	}

@@ -3,6 +3,7 @@
 #include "suppress.h"
 #include <opencv2/opencv.hpp>
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <locale>
 #include <iterator>
@@ -22,7 +23,6 @@ static int get_fourcc(std::string const& codec)
 
 static std::string to_upper(std::string const& str)
 {
-	using namespace std;
 	using namespace placeholders;
 	string up;
 	transform(str.begin(), str.end(), back_inserter(up),
@@ -32,7 +32,6 @@ static std::string to_upper(std::string const& str)
 
 static std::string get_codec(int fourcc)
 {
-	using namespace std;
 	const locale& loc = locale::classic();
 	string codec(4, ' ');
 	codec[0] = toupper<char>(fourcc & 255, loc);
@@ -44,7 +43,8 @@ static std::string get_codec(int fourcc)
 
 flutter::options::options():
 	ransac(0.001),
-	kalman(0.5),
+	process_error(0.5),
+	measurement_error(0.5),
 	low_pass(0.1),
 	fps(50.0),
 	quiet(false),
@@ -62,31 +62,36 @@ static void print_help()
 		"flutter - real time video stabilizer\n"
 		"usage: flutter [options] [infile]\n"
 		"\n"
-		"  -h, --help             Display help and exit\n"
-		"  -r, --ransac=<float>   Maximum inlier distance relative to image dimensions.\n"
-		"                         The default is " << default_opts.ransac <<  ".\n"
-		"  -k, --kalman=<float>   Kalman measurement error relative to image dimensions.\n"
-		"                         The default is " << default_opts.kalman << ".\n"
-		"  -l, --low-pass=<float> Low pass filter magnitude. The default is " << default_opts.low_pass << ".\n"
-		"  -d, --device=<int>     Input device number. The default is 0.\n"
-		"                         If infile is given, it overrides this setting.\n"
-		"  -f, --fps=<float>      Frames per second. Only relevant when output is shown.\n"
-		"                         The default is " << default_opts.fps << ". If the\n"
-		"                         input is a file, the output file will have the same\n"
-		"                         as the input file regardless of this setting.\n"
-		"  -q, --quiet            Do not show output.\n"
-		"  -c, --codec=<fourcc>   Output codec as a four-character code (fourcc).\n"
-		"                         By default the codec is the same as with the\n"
-		"                         infile, or '" << default_opts.codec << "'), if the source is a\n"
-		"                         device. The available codecs can be found at\n"
-		"                         http://www.fourcc.org/codecs.php\n"
-		"  -o, --output=<file>    Output file\n"
-		"  -s, --size=<size>      Output frame size. Given as a single scale\n"
-		"                         number <scale> or as <width>x<height>,\n"
-		"                         for example, 640x480. Either of the values may be\n"
-		"                         empty, in which case the value is calculated by\n"
-		"                         preserving the original aspect ratio. By default\n"
-		"                         the original size is used.\n"
+		"  -h, --help                       Display help and exit.\n"
+		"  -r, --ransac=<float>             Maximum inlier distance relative to image\n"
+		"                                   dimensions. The default is " << default_opts.ransac << ".\n"
+		"  -p, --process-noise=<float>      Kalman process noise relative to image"
+		"                                   dimensions. The default is " << default_opts.process_error << "\n"
+		"  -m, --measurement-noise=<float>  Kalman measurement noise relative to image"
+		"                                   dimensions. The default is " << default_opts.measurement_error << "\n"
+		"  -l, --low-pass=<float>           Low pass filter magnitude. The default is " << default_opts.low_pass << ".\n"
+		"  -d, --device=<int>               Input device number. The default is 0.\n"
+		"                                   If infile is given, it overrides this setting.\n"
+		"  -f, --fps=<float>                Frames per second. Only relevant when output is shown.\n"
+		"                                   The default is " << default_opts.fps << ".\n"
+		"                                   If the input is a file, the output file will\n"
+		"                                   have the same fps as the input file\n"
+		"                                   regardless of this setting.\n"
+		"  -q, --quiet                      Do not display output video.\n"
+		"  -c, --codec=<fourcc>             Output codec as a four-character code (fourcc).\n"
+		"                                   By default the codec is the same as with the\n"
+		"                                   infile, or '" << default_opts.codec << "'),\n"
+		"                                   if the source is a device. The available\n"
+		"                                   codecs can be found at\n"
+		"                                   http://www.fourcc.org/codecs.php\n"
+		"  -o, --output=<file>              Output file.\n"
+		"  -s, --size=<size>                Output frame size. Given as a single scale\n"
+		"                                   number <scale> or as <width>x<height>,\n"
+		"                                   for example, 640x480. Either of the values\n"
+		"                                   may be empty, in which case the value is\n"
+		"                                   calculated by preserving the original aspect\n"
+		"                                   ratio. By default the original size is used.\n"
+		"  -t, --trajectory=<file>          Trajectory data output file.\n"
 		;
 }
 
@@ -104,14 +109,17 @@ static bool get_video_capture(unique_ptr<cv::VideoCapture>& vc, const T& src = 0
 flutter::parse_status flutter::parse(options& opts, int argc, char* argv[])
 {
 	opt::parser op;
-	float scale = 0.0;
+	double scale = 0.0;
 	int out_width = 0;
 	int out_height = 0;
 	bool fourcc_set = false;
 	op.add('r', "ransac", &opts.ransac);
-	op.add('k', "kalman", &opts.kalman);
+	op.add('p', "process-noise", &opts.process_error);
+	op.add('m', "measurement-noise", &opts.measurement_error);
+	op.add('l', "low-pass", &opts.low_pass);
 	op.add('f', "fps", &opts.fps);
 	op.add('q', "quiet", &opts.quiet);
+	op.add('t', "trajectory", &opts.trajectory_file);
 	op.add('c', "codec", [&](const std::string& code) {
 		if (code.size() != 4) {
 			cerr << "fourcc should be exactly 4 characters long" <<
@@ -230,6 +238,13 @@ flutter::parse_status flutter::parse(options& opts, int argc, char* argv[])
 			opts.fourcc, opts.fps, size);
 		if (!opts.writer->isOpened()) {
 			cerr << "unable to open file " << opts.output_file << endl;
+			return fail;
+		}
+	}
+	if (!opts.trajectory_file.empty()) {
+		opts.trajectory = make_unique<ofstream>(opts.trajectory_file);
+		if (opts.trajectory->fail()) {
+			cerr << "unable to open file " << opts.trajectory_file << endl;
 			return fail;
 		}
 	}

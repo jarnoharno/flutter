@@ -17,7 +17,7 @@ configure_file(
 include_directories("${PROJECT_SOURCE_DIR}")
 include_directories("${PROJECT_BINARY_DIR}")
 
-add_executable(flutter flutter.cpp options.cpp)
+add_executable(flutter flutter.cpp options.cpp registration.cpp)
 target_link_libraries(flutter ${OpenCV_LIBS})
 target_compile_features(flutter PRIVATE cxx_return_type_deduction)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y")

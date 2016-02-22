@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <iosfwd>
 
 namespace cv
 {
@@ -19,10 +20,11 @@ enum input_source {
 };
 
 struct options {
-	float ransac;
-	float kalman;
-	float low_pass;
-	float fps;
+	double ransac;
+	double process_error;
+	double measurement_error;
+	double low_pass;
+	double fps;
 	int delay;
 	bool quiet;
 	std::string codec;
@@ -30,10 +32,12 @@ struct options {
 	input_source input_src;
 	std::string input_file;
 	std::string output_file;
+	std::string trajectory_file;
 	int out_width;
 	int out_height;
 	std::unique_ptr<cv::VideoCapture> capture;
 	std::unique_ptr<cv::VideoWriter> writer;
+	std::unique_ptr<std::ofstream> trajectory;
 
 	options();
 };
