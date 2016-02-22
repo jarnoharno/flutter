@@ -48,6 +48,7 @@ flutter::options::options():
 	low_pass(0.1),
 	avg_window(0),
 	fps(50.0),
+	show_original(false),
 	quiet(false),
 	codec("MJPG"),
 	fourcc(get_fourcc(codec)),
@@ -80,6 +81,8 @@ static void print_help()
 		"                                   If the input is a file, the output file will\n"
 		"                                   have the same fps as the input file\n"
 		"                                   regardless of this setting.\n"
+		"  -x, --show-original              Show both original and stabilized video on top\n"
+		"                                   of each other.\n"
 		"  -q, --quiet                      Do not display output video.\n"
 		"  -c, --codec=<fourcc>             Output codec as a four-character code (fourcc).\n"
 		"                                   By default the codec is the same as with the\n"
@@ -122,6 +125,7 @@ flutter::parse_status flutter::parse(options& opts, int argc, char* argv[])
 	op.add('l', "low-pass", &opts.low_pass);
 	op.add('a', "avg-window", &opts.avg_window);
 	op.add('f', "fps", &opts.fps);
+	op.add('x', "show-original", &opts.show_original);
 	op.add('q', "quiet", &opts.quiet);
 	op.add('t', "trajectory", &opts.trajectory_file);
 	op.add('c', "codec", [&](const std::string& code) {

@@ -53,6 +53,7 @@ struct state {
 	deque<frame> queue;
 	KalmanFilter delta_filter;
 	int frame_no;
+	Mat canvas;
 
 
 	state(options opts);
@@ -163,6 +164,8 @@ bool state::init()
 	namedWindow(program_name, CV_WINDOW_NORMAL);
 	write_trajectory_header();
 	init_filter();
+	canvas.create(opts.show_original ? opts.out_height*2 : opts.out_height,
+		opts.out_width, queue.front().image.type());
 	if (!opts.avg_window)
 		return true;
 	cout << "buffering...";
@@ -232,10 +235,16 @@ bool state::display()
 	warpAffine(disp_frame.image, transformed, inverse,
 		disp_frame.image.size());
 	Size size(opts.out_width, opts.out_height);
-	Mat display;
-	resize(transformed, display, size);
+	Mat top_display = canvas(Range(0,opts.out_height), Range::all());
+	resize(transformed, top_display, size);
+	if (opts.show_original) {
+		Mat bottom_display = canvas(
+			Range(opts.out_height, opts.out_height*2),
+			Range::all());
+		resize(disp_frame.image, bottom_display, size);
+	}
 	if (opts.writer) {
-		opts.writer->write(display);
+		opts.writer->write(canvas);
 	}
 	if (opts.trajectory) {
 		*opts.trajectory <<
@@ -246,7 +255,7 @@ bool state::display()
 	}
 	++frame_no;
 	if (!opts.quiet) {
-		imshow(program_name, display);
+		imshow(program_name, canvas);
 	}
 	if (!opts.quiet || opts.input_src == device_input) {
 		int key = waitKey(opts.delay);

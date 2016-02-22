@@ -36,6 +36,7 @@ struct options {
 	std::string trajectory_file;
 	int out_width;
 	int out_height;
+	bool show_original;
 	std::unique_ptr<cv::VideoCapture> capture;
 	std::unique_ptr<cv::VideoWriter> writer;
 	std::unique_ptr<std::ofstream> trajectory;
