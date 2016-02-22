@@ -24,6 +24,7 @@ struct options {
 	double process_error;
 	double measurement_error;
 	double low_pass;
+	int avg_window;
 	double fps;
 	int delay;
 	bool quiet;

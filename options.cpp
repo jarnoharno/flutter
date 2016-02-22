@@ -46,6 +46,7 @@ flutter::options::options():
 	process_error(0.5),
 	measurement_error(0.5),
 	low_pass(0.1),
+	avg_window(0),
 	fps(50.0),
 	quiet(false),
 	codec("MJPG"),
@@ -70,6 +71,8 @@ static void print_help()
 		"  -m, --measurement-noise=<float>  Kalman measurement noise relative to image"
 		"                                   dimensions. The default is " << default_opts.measurement_error << "\n"
 		"  -l, --low-pass=<float>           Low pass filter magnitude. The default is " << default_opts.low_pass << ".\n"
+		"  -a, --avg-window=<int>           Centered moving average window size. Overrides\n"
+		"                                   default exponential low-pass filter if set.\n"
 		"  -d, --device=<int>               Input device number. The default is 0.\n"
 		"                                   If infile is given, it overrides this setting.\n"
 		"  -f, --fps=<float>                Frames per second. Only relevant when output is shown.\n"
@@ -117,6 +120,7 @@ flutter::parse_status flutter::parse(options& opts, int argc, char* argv[])
 	op.add('p', "process-noise", &opts.process_error);
 	op.add('m', "measurement-noise", &opts.measurement_error);
 	op.add('l', "low-pass", &opts.low_pass);
+	op.add('a', "avg-window", &opts.avg_window);
 	op.add('f', "fps", &opts.fps);
 	op.add('q', "quiet", &opts.quiet);
 	op.add('t', "trajectory", &opts.trajectory_file);

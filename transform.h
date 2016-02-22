@@ -38,9 +38,20 @@ struct Transform {
 	{
 		return *this + -t;
 	}
+	Transform& operator-=(const Transform& t)
+	{
+		x -= t.x;
+		y -= t.y;
+		a -= t.a;
+		return *this;
+	}
 	Transform operator*(T c) const
 	{
 		return Transform(c*x, c*y, c*a);
+	}
+	Transform operator/(T c) const
+	{
+		return Transform(x/c, y/c, a/c);
 	}
 	cv::Mat toMat() const
 	{

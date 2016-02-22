@@ -32,6 +32,7 @@ inline std::ostream& operator<<(std::ostream& o, options const& opts)
 		"  process_error: " << opts.process_error << "," << endl <<
 		"  measurement_error: " << opts.measurement_error << "," << endl <<
 		"  low_pass: " << opts.low_pass << "," << endl <<
+		"  avg_window: " << opts.avg_window << "," << endl <<
 		"  fps: " << opts.fps << "," << endl <<
 		"  delay: " << opts.delay << "," << endl <<
 		"  quiet: " << bool_str(opts.quiet) << "," << endl <<
