@@ -226,22 +226,32 @@ void state::init_filter()
 
 bool state::display()
 {
-	Mat transformed;
 	const frame& next_frame = queue[0];
 	const frame& disp_frame = opts.avg_window ?
 		queue[opts.avg_window/2] :
 		queue[0];
+	Size in_size = next_frame.image.size();
+	Size out_size(opts.out_width, opts.out_height);
+	double scale_x = static_cast<double>(out_size.width) / in_size.width;
+	double scale_y = static_cast<double>(out_size.height) / in_size.height;
 	Mat inverse = (next_frame.apparent - disp_frame.camera).toMat();
-	warpAffine(disp_frame.image, transformed, inverse,
-		disp_frame.image.size());
-	Size size(opts.out_width, opts.out_height);
+	inverse.row(0) *= scale_x;
+	inverse.row(1) *= scale_y;
+	if (opts.zoom > 0.0) {
+		double z = opts.zoom;
+		double w = out_size.width/2;
+		double h = out_size.height/2;
+		inverse(Range(0,2), Range::all()) *= z;
+		inverse.at<t_type>(0,2) += w*(1-z);
+		inverse.at<t_type>(1,2) += h*(1-z);
+	}
 	Mat top_display = canvas(Range(0,opts.out_height), Range::all());
-	resize(transformed, top_display, size);
+	warpAffine(disp_frame.image, top_display, inverse, out_size);
 	if (opts.show_original) {
 		Mat bottom_display = canvas(
 			Range(opts.out_height, opts.out_height*2),
 			Range::all());
-		resize(disp_frame.image, bottom_display, size);
+		resize(disp_frame.image, bottom_display, out_size);
 	}
 	if (opts.writer) {
 		opts.writer->write(canvas);

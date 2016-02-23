@@ -37,6 +37,7 @@ struct options {
 	int out_width;
 	int out_height;
 	bool show_original;
+	double zoom;
 	std::unique_ptr<cv::VideoCapture> capture;
 	std::unique_ptr<cv::VideoWriter> writer;
 	std::unique_ptr<std::ofstream> trajectory;

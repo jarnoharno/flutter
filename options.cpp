@@ -48,6 +48,7 @@ flutter::options::options():
 	low_pass(0.1),
 	avg_window(0),
 	fps(50.0),
+	zoom(0.0),
 	show_original(false),
 	quiet(false),
 	codec("MJPG"),
@@ -97,6 +98,7 @@ static void print_help()
 		"                                   may be empty, in which case the value is\n"
 		"                                   calculated by preserving the original aspect\n"
 		"                                   ratio. By default the original size is used.\n"
+		"  -z, --zoom=<float>               Scale the video by the given factor.\n"
 		"  -t, --trajectory=<file>          Trajectory data output file.\n"
 		;
 }
@@ -128,6 +130,7 @@ flutter::parse_status flutter::parse(options& opts, int argc, char* argv[])
 	op.add('x', "show-original", &opts.show_original);
 	op.add('q', "quiet", &opts.quiet);
 	op.add('t', "trajectory", &opts.trajectory_file);
+	op.add('z', "zoom", &opts.zoom);
 	op.add('c', "codec", [&](const std::string& code) {
 		if (code.size() != 4) {
 			cerr << "fourcc should be exactly 4 characters long" <<

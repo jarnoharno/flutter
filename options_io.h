@@ -42,6 +42,7 @@ inline std::ostream& operator<<(std::ostream& o, options const& opts)
 		"  input_file: \"" << opts.input_file << "\"," << endl <<
 		"  output_file: \"" << opts.output_file << "\"," << endl <<
 		"  trajectory_file: \"" << opts.trajectory_file << "\"," << endl <<
+		"  zoom: \"" << opts.zoom << "\"," << endl <<
 		"  out_width: " << opts.out_width << "," << endl <<
 		"  out_height: " << opts.out_height << "," << endl <<
 		"}";
