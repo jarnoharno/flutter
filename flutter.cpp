@@ -54,7 +54,8 @@ struct state {
 	KalmanFilter delta_filter;
 	int frame_no;
 	Mat canvas;
-
+	int64 tick_count;
+	int64 last_warning;
 
 	state(options opts);
 	void run();
@@ -67,12 +68,15 @@ struct state {
 	void compute_transformation();
 	void compute_apparent();
 	void close();
+	int wait();
 };
 
 state::state(options opts):
 	opts(move(opts)),
 	delta_filter(3,3,0,opencv_traits<t_type>::type),
-	frame_no(0)
+	frame_no(0),
+	tick_count(0),
+	last_warning(0)
 {
 }
 
@@ -159,13 +163,35 @@ void state::run()
 	close();
 }
 
+int state::wait()
+{
+	int ms_passed = 0;
+	if (tick_count != 0) {
+		int64 now = getTickCount();
+		ms_passed = (now - tick_count)*1000 / getTickFrequency();
+		if (ms_passed >= opts.delay) {
+			if ((now-last_warning)/getTickFrequency() > 5) {
+				cerr << "Too slow... (" << ms_passed <<
+					" ms >= " << opts.delay << " ms)" <<
+					endl;
+				last_warning = now;
+			}
+			ms_passed = opts.delay - 1;
+		}
+	}
+	int key = waitKey(opts.delay - ms_passed);
+	tick_count = getTickCount();
+	return key;
+}
+
 bool state::init()
 {
-	namedWindow(program_name, CV_WINDOW_NORMAL);
+	if (!opts.quiet)
+		namedWindow(program_name, CV_WINDOW_NORMAL);
 	write_trajectory_header();
 	init_filter();
-	canvas.create(opts.show_original ? opts.out_height*2 : opts.out_height,
-		opts.out_width, queue.front().image.type());
+	Size canvas_size(opts.display_width, opts.display_height);
+	canvas.create(canvas_size, CV_8UC3);
 	if (!opts.avg_window)
 		return true;
 	cout << "buffering...";
@@ -173,7 +199,7 @@ bool state::init()
 		queue.emplace_back();
 	for (int i = 0; i < opts.avg_window/2; ++i) {
 		if (!opts.quiet || opts.input_src == device_input) {
-			int key = waitKey(opts.delay);
+			int key = wait();
 			switch (key) {
 			case 27:
 			case 'q':
@@ -245,13 +271,27 @@ bool state::display()
 		inverse.at<t_type>(0,2) += w*(1-z);
 		inverse.at<t_type>(1,2) += h*(1-z);
 	}
-	Mat top_display = canvas(Range(0,opts.out_height), Range::all());
-	warpAffine(disp_frame.image, top_display, inverse, out_size);
+	Mat main_display;
+	Mat secondary_display;
+	if (out_size.width > out_size.height) {
+		main_display = canvas(Range(0,opts.out_height), Range::all());
+		if (opts.show_original) {
+			secondary_display = canvas(
+				Range(opts.out_height,opts.out_height*2),
+				Range::all());
+		}
+	} else {
+		main_display = canvas(Range::all(), Range(0,opts.out_width));
+		if (opts.show_original) {
+			secondary_display = canvas(
+				Range::all(),
+				Range(opts.out_width,opts.out_width*2));
+		}
+	}
+
+	warpAffine(disp_frame.image, main_display, inverse, out_size);
 	if (opts.show_original) {
-		Mat bottom_display = canvas(
-			Range(opts.out_height, opts.out_height*2),
-			Range::all());
-		resize(disp_frame.image, bottom_display, out_size);
+		resize(disp_frame.image, secondary_display, out_size);
 	}
 	if (opts.writer) {
 		opts.writer->write(canvas);
@@ -268,7 +308,7 @@ bool state::display()
 		imshow(program_name, canvas);
 	}
 	if (!opts.quiet || opts.input_src == device_input) {
-		int key = waitKey(opts.delay);
+		int key = wait();
 		switch (key) {
 		case 27:
 		case 'q':

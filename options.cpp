@@ -47,7 +47,7 @@ flutter::options::options():
 	measurement_error(0.5),
 	low_pass(0.1),
 	avg_window(0),
-	fps(50.0),
+	fps(30.0),
 	zoom(0.0),
 	show_original(false),
 	quiet(false),
@@ -236,6 +236,14 @@ flutter::parse_status flutter::parse(options& opts, int argc, char* argv[])
 		opts.out_width = in_width;
 		opts.out_height = in_height;
 	}
+	opts.display_width = opts.out_width;
+	opts.display_height = opts.out_height;
+	if (opts.show_original) {
+		if (opts.out_width > opts.out_height)
+			opts.display_height *= 2;
+		else
+			opts.display_width *= 2;
+	}
 	if (!opts.input_file.empty()) {
 		opts.fps = opts.capture->get(CV_CAP_PROP_FPS);
 		if (!fourcc_set) {
@@ -244,7 +252,8 @@ flutter::parse_status flutter::parse(options& opts, int argc, char* argv[])
 		}
 	}
 	if (!opts.output_file.empty()) {
-		cv::Size size(opts.out_width, opts.out_height);
+
+		cv::Size size(opts.display_width, opts.display_height);
 		opts.writer = make_unique<cv::VideoWriter>(opts.output_file,
 			opts.fourcc, opts.fps, size);
 		if (!opts.writer->isOpened()) {

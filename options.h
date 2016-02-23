@@ -36,6 +36,8 @@ struct options {
 	std::string trajectory_file;
 	int out_width;
 	int out_height;
+	int display_width;
+	int display_height;
 	bool show_original;
 	double zoom;
 	std::unique_ptr<cv::VideoCapture> capture;
