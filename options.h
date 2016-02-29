@@ -20,7 +20,8 @@ enum input_source {
 };
 
 struct options {
-	double ransac;
+	double ransac_good_ratio;
+	double ransac_threshold;
 	double process_error;
 	double measurement_error;
 	double low_pass;

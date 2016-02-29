@@ -57,13 +57,12 @@ get_rt_matrix(const CvPoint2D32f* a, const CvPoint2D32f* b,
 }
 
 static int estimate_rigid_transform_detail(const CvArr* matA, const CvArr* matB,
-	CvMat* matM)
+	CvMat* matM, double ransac_good_ratio, double ransac_threshold)
 {
 	const int COUNT = 15;
 	const int WIDTH = 160, HEIGHT = 120;
 	const int RANSAC_MAX_ITERS = 500;
 	const int RANSAC_SIZE0 = 3;
-	const double RANSAC_GOOD_RATIO = 0.5;
 
 	cv::Ptr<CvMat> sA, sB;
 	cv::AutoBuffer<CvPoint2D32f> pA, pB;
@@ -251,12 +250,12 @@ static int estimate_rigid_transform_detail(const CvArr* matA, const CvArr* matB,
 
 		for (i = 0, good_count = 0; i < count; i++) {
 			if (fabs(m[0]*pA[i].x + m[1]*pA[i].y + m[2] - pB[i].x) +
-			                fabs(m[3]*pA[i].x + m[4]*pA[i].y + m[5] - pB[i].y) < MAX(brect.width,brect.height)*0.05) {
+			                fabs(m[3]*pA[i].x + m[4]*pA[i].y + m[5] - pB[i].y) < MAX(brect.width,brect.height)*ransac_threshold) {
 				good_idx[good_count++] = i;
 			}
 		}
 
-		if (good_count >= count*RANSAC_GOOD_RATIO) {
+		if (good_count >= count*ransac_good_ratio) {
 			break;
 		}
 	}
@@ -281,11 +280,13 @@ static int estimate_rigid_transform_detail(const CvArr* matA, const CvArr* matB,
 	return 1;
 }
 
-cv::Mat flutter::estimate_rigid_transform(cv::InputArray src1, cv::InputArray src2)
+cv::Mat flutter::estimate_rigid_transform(cv::InputArray src1, cv::InputArray src2,
+	double ransac_good_ratio, double ransac_threshold)
 {
 	Mat M(2, 3, CV_64F), A = src1.getMat(), B = src2.getMat();
 	CvMat matA = A, matB = B, matM = M;
-	int err = estimate_rigid_transform_detail(&matA, &matB, &matM);
+	int err = estimate_rigid_transform_detail(&matA, &matB, &matM,
+		ransac_good_ratio, ransac_threshold);
 	if (err == 1) {
 		return M;
 	} else {

@@ -5,7 +5,8 @@
 
 namespace flutter {
 
-cv::Mat estimate_rigid_transform(cv::InputArray src1, cv::InputArray src2);
+cv::Mat estimate_rigid_transform(cv::InputArray src1, cv::InputArray src2,
+	double ransac_good_ratio, double ransac_threshold);
 
 }
 

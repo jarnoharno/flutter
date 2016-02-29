@@ -42,7 +42,8 @@ static std::string get_codec(int fourcc)
 }
 
 flutter::options::options():
-	ransac(0.001),
+	ransac_good_ratio(0.5),
+	ransac_threshold(0.05),
 	process_error(0.5),
 	measurement_error(0.5),
 	low_pass(0.1),
@@ -66,8 +67,10 @@ static void print_help()
 		"usage: flutter [options] [infile]\n"
 		"\n"
 		"  -h, --help                       Display help and exit.\n"
-		"  -r, --ransac=<float>             Maximum inlier distance relative to image\n"
-		"                                   dimensions. The default is " << default_opts.ransac << ".\n"
+		"  -r, --ransac-ratio=<float>       Minimum ratio of points for an acceptable\n"
+		"                                   model. The default is " << default_opts.ransac_good_ratio << ".\n"
+		"  -n, --ransac-threshold=<float>   Maximum inlier distance relative to image\n"
+		"                                   dimensions. The default is " << default_opts.ransac_threshold << ".\n"
 		"  -p, --process-noise=<float>      Kalman process noise relative to image"
 		"                                   dimensions. The default is " << default_opts.process_error << "\n"
 		"  -m, --measurement-noise=<float>  Kalman measurement noise relative to image"
@@ -121,7 +124,8 @@ flutter::parse_status flutter::parse(options& opts, int argc, char* argv[])
 	int out_width = 0;
 	int out_height = 0;
 	bool fourcc_set = false;
-	op.add('r', "ransac", &opts.ransac);
+	op.add('r', "ransac-ratio", &opts.ransac_good_ratio);
+	op.add('n', "ransac-threshold", &opts.ransac_threshold);
 	op.add('p', "process-noise", &opts.process_error);
 	op.add('m', "measurement-noise", &opts.measurement_error);
 	op.add('l', "low-pass", &opts.low_pass);
@@ -243,6 +247,9 @@ flutter::parse_status flutter::parse(options& opts, int argc, char* argv[])
 			opts.display_height *= 2;
 		else
 			opts.display_width *= 2;
+	}
+	if (opts.input_file.empty()) {
+		opts.capture->set(CV_CAP_PROP_FPS, opts.fps);
 	}
 	if (!opts.input_file.empty()) {
 		opts.fps = opts.capture->get(CV_CAP_PROP_FPS);

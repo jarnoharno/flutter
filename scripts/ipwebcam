@@ -1,0 +1,96 @@
+#!/bin/bash
+
+
+connect=adb
+
+function show_help {
+    echo 'droidcam-show [option] [adb|<address>]'
+    echo 'Options:'
+    echo '  -h|--help              Show help and exit.'
+    echo '  -r                     Reinsert kernel module.'
+    echo '  -q                     Do not open video player.'
+}
+
+while [ $# -gt 0 ]
+do
+key="$1"
+case $key in
+-h|--help)
+    show_help
+    exit 0
+    ;;
+-r)
+    reinsert=true
+    ;;
+-q)
+    quiet=true
+    ;;
+*)
+    connect="$1"
+    ;;
+esac
+shift
+done
+
+module=v4l2loopback
+port=8080
+
+for d in /dev/video*
+do
+    v4l2-ctl -D -d $d | grep -q 'v4l2 loopback' && device=$d
+done
+
+if [ -z "$device" ]
+then
+    echo "can't find loopback device"
+    exit
+fi
+
+if [ -n "$reinsert" ]; then
+    sudo modprobe -r $module
+    sudo modprobe $module
+    sleep 1
+fi
+
+echo "Connecting to $connect..."
+
+if [ "$connect" == adb ]; then
+    adb forward --remove-all
+    adb forward tcp:$port tcp:$port
+    if [ -z "$quiet" ]; then
+        gst-launch-0.10 souphttpsrc \
+            location="http://127.0.0.1:$port/videofeed" \
+            do-timestamp=true is-live=true ! \
+            multipartdemux ! jpegdec ! ffmpegcolorspace ! \
+            v4l2sink device=$device > /dev/null &
+    else
+        gst-launch-0.10 souphttpsrc \
+            location="http://127.0.0.1:$port/videofeed" \
+            do-timestamp=true is-live=true ! \
+            multipartdemux ! jpegdec ! ffmpegcolorspace ! \
+            v4l2sink device=$device
+    fi
+else
+    if [ -z "$quiet" ]; then
+        gst-launch-0.10 souphttpsrc \
+            location="http://$connect:$port/videofeed" \
+            do-timestamp=true is-live=true ! \
+            multipartdemux ! jpegdec ! ffmpegcolorspace ! \
+            v4l2sink device=$device > /dev/null &
+    else
+        gst-launch-0.10 souphttpsrc \
+            location="http://$connect:$port/videofeed" \
+            do-timestamp=true is-live=true ! \
+            multipartdemux ! jpegdec ! ffmpegcolorspace ! \
+            v4l2sink device=$device
+    fi
+fi
+
+if [ -z "$quiet" ]; then
+    gst_pid=$!
+    echo gst_pid=$gst_pid
+    sleep 1
+    #mplayer tv:// -tv driver=v4l2:device=$device
+    cvlc v4l2://$device
+    kill $gst_pid
+fi

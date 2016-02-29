@@ -21,6 +21,8 @@ struct Transform {
 	}
 	Transform& operator+=(const Transform& t)
 	{
+		//x += t.x * cos(a) - t.y * sin(a);
+		//y += t.x * sin(a) + t.y * cos(a);
 		x += t.x;
 		y += t.y;
 		a += t.a;
@@ -28,7 +30,9 @@ struct Transform {
 	}
 	Transform operator+(const Transform& t) const
 	{
-		return Transform(x + t.x, y + t.y, a + t.a);
+		Transform r(*this);
+		r += t;
+		return r;
 	}
 	Transform operator-() const
 	{
@@ -40,10 +44,7 @@ struct Transform {
 	}
 	Transform& operator-=(const Transform& t)
 	{
-		x -= t.x;
-		y -= t.y;
-		a -= t.a;
-		return *this;
+		return *this += -t;
 	}
 	Transform operator*(T c) const
 	{

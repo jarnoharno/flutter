@@ -87,7 +87,8 @@ void state::compute_transformation()
 	if (prev_frame.image.empty() || next_frame.image.empty())
 		return;
 	Mat sensor_delta_mat = estimate_rigid_transform(
-		prev_frame.image, next_frame.image);
+		prev_frame.image, next_frame.image,
+		opts.ransac_good_ratio, opts.ransac_threshold);
 	if (sensor_delta_mat.empty())
 		sensor_delta_mat = Mat::eye(2, 3, opencv_traits<t_type>::type);
 	Transform<t_type> sensor_delta(sensor_delta_mat);

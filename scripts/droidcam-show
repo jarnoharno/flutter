@@ -42,7 +42,17 @@ done
 
 module=v4l2loopback_dc
 port=4747
-device=/dev/video1
+
+for d in /dev/video*
+do
+    v4l2-ctl -D -d $d | grep -q 'Droidcam' && device=$d
+done
+
+if [ -z "$device" ]
+then
+    echo "can't find droidcam loopback device"
+    exit
+fi
 
 if [ -n "$reinsert" ]; then
     sudo modprobe -r $module

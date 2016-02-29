@@ -28,7 +28,8 @@ inline std::ostream& operator<<(std::ostream& o, options const& opts)
 	using namespace std;
 	return o <<
 		"{" << endl <<
-		"  ransac: " << opts.ransac << "," << endl <<
+		"  ransac_good_ratio: " << opts.ransac_good_ratio << "," << endl <<
+		"  ransac_threshold: " << opts.ransac_threshold<< "," << endl <<
 		"  process_error: " << opts.process_error << "," << endl <<
 		"  measurement_error: " << opts.measurement_error << "," << endl <<
 		"  low_pass: " << opts.low_pass << "," << endl <<
