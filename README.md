@@ -16,9 +16,14 @@ Get help:
 
     flutter --help
 
-Stabilize default webcam input:
+Stabilize default webcam input with default parameters:
 
     flutter
+
+Use parameters more suitable to videos with mostly local
+movement (like a webcam that doesn't move much):
+
+    flutter -r 0.9 -n 0.02
 
 Use a moving average filter for camera smoothing with a window
 length of 30 frames, zoom in by a factor of 1.2 and output both
@@ -27,7 +32,7 @@ the original and filtered versions:
     flutter -a 20 -z 1.2 -x
 
 Stabilize a video file, scale to a width of 640 pixels maintaining
-aspect ratio, don't show output, use motion-JPG as output codec
+aspect ratio, don't show output, use motion-JPG as the output codec
 and save the camera trajectory data to a file as tab-separated values:
 
     flutter pan.mp4 -o out.avi -s 640x -q -c mjpg -t out.tsv
